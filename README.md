@@ -110,13 +110,13 @@ atendendo aos requisitos da disciplina.
 
 O modelo conceitual foi desenvolvido utilizando Oracle Data Modeler, representando as entidades e relacionamentos necessários para o monitoramento de riscos ambientais.
 
-![DER OrbitGuard](./Diagramas/OrbitGuard-DBLogical.png)
+![DER OrbitGuard](./OrbitGuard/Diagramas/OrbitGuard-DBLogical.png)
 
 ## Modelo Relacional
 
 O modelo relacional apresenta a implementação física do banco Oracle, incluindo tabelas, atributos, chaves primárias, chaves estrangeiras e restrições de integridade.
 
-![Modelo Relacional OrbitGuard](./Diagramas/OrbitGuard-DBRelational.png)
+![Modelo Relacional OrbitGuard](./OrbitGuard/Diagramas/OrbitGuard-DBRelational.png)
 
 ### Relacionamentos Implementados
 
