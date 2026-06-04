@@ -1,6 +1,6 @@
 @OrbitGuard_HostAddress = http://localhost:5225
 
-GET {{OrbitGuard_HostAddress}}/weatherforecast/
+GET {{OrbitGuard_HostAddress}}
 Accept: application/json
 
 ###
