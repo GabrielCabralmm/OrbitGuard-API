@@ -36,9 +36,6 @@ namespace OrbitGuardAPI.Entitys
         [Column("DATA_INSTALACAO")]
         public DateTime DataInstalacao { get; set; } = DateTime.Now;
 
-        [ForeignKey(nameof(IdRegiao))]
-        public RegiaoEntity? Regiao { get; set; }
-
         [JsonIgnore]
         [ForeignKey(nameof(IdRegiao))]
         public RegiaoEntity? Regiao { get; set; }

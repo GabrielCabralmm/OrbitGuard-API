@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!usuarios.Any())
+                if (usuarios.Count == 0)
                     return NotFound("Nenhum usuário encontrado.");
 
                 return Ok(usuarios);
@@ -89,15 +89,25 @@ namespace OrbitGuardAPI.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var emailExiste = await _context.Usuarios
-                    .AnyAsync(u => u.Email.ToLower() == usuario.Email.ToLower());
+                usuario.Nome = usuario.Nome.Trim();
+                usuario.Email = usuario.Email.Trim().ToLower();
+                usuario.Perfil = usuario.Perfil.Trim().ToUpper();
+                usuario.Ativo = usuario.Ativo.Trim().ToUpper();
 
-                if (emailExiste)
+                if (!string.IsNullOrWhiteSpace(usuario.Telefone))
+                    usuario.Telefone = usuario.Telefone.Trim();
+
+                var emailExiste = await _context.Usuarios
+                    .AsNoTracking()
+                    .Where(u => u.Email.ToLower() == usuario.Email)
+                    .Select(u => u.IdUsuario)
+                    .FirstOrDefaultAsync();
+
+                if (emailExiste != 0)
                     return Conflict("Já existe um usuário cadastrado com este e-mail.");
 
-                usuario.DataCadastro = usuario.DataCadastro == default
-                    ? DateTime.Now
-                    : usuario.DataCadastro;
+                if (usuario.DataCadastro == default)
+                    usuario.DataCadastro = DateTime.Now;
 
                 _context.Usuarios.Add(usuario);
                 await _context.SaveChangesAsync();
@@ -135,21 +145,35 @@ namespace OrbitGuardAPI.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var usuarioExiste = await _context.Usuarios
-                    .AnyAsync(u => u.IdUsuario == id);
+                usuario.Nome = usuario.Nome.Trim();
+                usuario.Email = usuario.Email.Trim().ToLower();
+                usuario.Perfil = usuario.Perfil.Trim().ToUpper();
+                usuario.Ativo = usuario.Ativo.Trim().ToUpper();
 
-                if (!usuarioExiste)
-                    return NotFound("Usuário não encontrado.");
+                if (!string.IsNullOrWhiteSpace(usuario.Telefone))
+                    usuario.Telefone = usuario.Telefone.Trim();
 
                 var emailEmUso = await _context.Usuarios
-                    .AnyAsync(u =>
-                        u.Email.ToLower() == usuario.Email.ToLower()
-                        && u.IdUsuario != id);
+                    .AsNoTracking()
+                    .Where(u => u.Email.ToLower() == usuario.Email && u.IdUsuario != id)
+                    .Select(u => u.IdUsuario)
+                    .FirstOrDefaultAsync();
 
-                if (emailEmUso)
+                if (emailEmUso != 0)
                     return Conflict("Já existe outro usuário cadastrado com este e-mail.");
 
-                _context.Entry(usuario).State = EntityState.Modified;
+                var usuarioBanco = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.IdUsuario == id);
+
+                if (usuarioBanco == null)
+                    return NotFound("Usuário não encontrado.");
+
+                usuarioBanco.Nome = usuario.Nome;
+                usuarioBanco.Email = usuario.Email;
+                usuarioBanco.Perfil = usuario.Perfil;
+                usuarioBanco.Telefone = usuario.Telefone;
+                usuarioBanco.Ativo = usuario.Ativo;
+
                 await _context.SaveChangesAsync();
 
                 return NoContent();
