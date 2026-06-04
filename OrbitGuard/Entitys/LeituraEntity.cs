@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OrbitGuardAPI.Entitys
 {
@@ -35,6 +36,7 @@ namespace OrbitGuardAPI.Entitys
         [Column("ORIGEM")]
         public string Origem { get; set; } = "IOT";
 
+        [JsonIgnore]
         [ForeignKey(nameof(IdSensor))]
         public SensorEntity? Sensor { get; set; }
     }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OrbitGuardAPI.Entitys
 {
@@ -42,12 +43,15 @@ namespace OrbitGuardAPI.Entitys
         [Column("DATA_OCORRENCIA")]
         public DateTime DataOcorrencia { get; set; } = DateTime.Now;
 
+        [JsonIgnore]
         [ForeignKey(nameof(IdUsuario))]
         public UsuarioEntity? Usuario { get; set; }
 
+        [JsonIgnore]
         [ForeignKey(nameof(IdRegiao))]
         public RegiaoEntity? Regiao { get; set; }
 
+        [JsonIgnore]
         [ForeignKey(nameof(IdAlerta))]
         public AlertaEntity? Alerta { get; set; }
     }

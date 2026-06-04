@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OrbitGuardAPI.Entitys
 {
@@ -31,6 +32,7 @@ namespace OrbitGuardAPI.Entitys
         [Column("DATA_AUDITORIA")]
         public DateTime DataAuditoria { get; set; } = DateTime.Now;
 
+        [JsonIgnore]
         [ForeignKey(nameof(IdAlerta))]
         public AlertaEntity? Alerta { get; set; }
     }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OrbitGuardAPI.Entitys
 {
@@ -40,9 +41,11 @@ namespace OrbitGuardAPI.Entitys
         [Column("ATIVO")]
         public string Ativo { get; set; } = "S";
 
+        [JsonIgnore]
         [ForeignKey(nameof(IdRegiao))]
         public RegiaoEntity? Regiao { get; set; }
 
+        [JsonIgnore]
         public ICollection<RecursoAbrigoEntity> Recursos { get; set; } = new List<RecursoAbrigoEntity>();
     }
 }

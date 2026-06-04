@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OrbitGuardAPI.Entitys
 {
@@ -38,6 +39,11 @@ namespace OrbitGuardAPI.Entitys
         [ForeignKey(nameof(IdRegiao))]
         public RegiaoEntity? Regiao { get; set; }
 
+        [JsonIgnore]
+        [ForeignKey(nameof(IdRegiao))]
+        public RegiaoEntity? Regiao { get; set; }
+
+        [JsonIgnore]
         public ICollection<LeituraEntity> Leituras { get; set; } = new List<LeituraEntity>();
     }
 }

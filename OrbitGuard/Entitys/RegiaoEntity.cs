@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OrbitGuardAPI.Entitys
 {
@@ -50,10 +51,19 @@ namespace OrbitGuardAPI.Entitys
         [Column("POPULACAO_ESTIMADA")]
         public int PopulacaoEstimada { get; set; }
 
+        [JsonIgnore]
         public ICollection<SensorEntity> Sensores { get; set; } = new List<SensorEntity>();
+
+        [JsonIgnore]
         public ICollection<AbrigoEntity> Abrigos { get; set; } = new List<AbrigoEntity>();
+
+        [JsonIgnore]
         public ICollection<HistoricoEntity> HistoricosRisco { get; set; } = new List<HistoricoEntity>();
+
+        [JsonIgnore]
         public ICollection<AlertaEntity> AlertasRisco { get; set; } = new List<AlertaEntity>();
+
+        [JsonIgnore]
         public ICollection<OcorrenciaEntity> Ocorrencias { get; set; } = new List<OcorrenciaEntity>();
     }
 }
