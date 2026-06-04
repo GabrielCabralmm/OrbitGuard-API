@@ -574,3 +574,5 @@ A solução atende aos requisitos técnicos propostos pela disciplina, incluindo
 * Aplicação dos principais Status Codes HTTP.
 
 O projeto demonstra a aplicação prática dos conceitos de desenvolvimento backend utilizando .NET, APIs REST e bancos de dados relacionais.
+
+Link do vídeo demonstrativo da aplicação: https://youtu.be/0gqApOjlAr8
