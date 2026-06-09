@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrbitGuardAPI.Data;
 using OrbitGuardAPI.Entitys;
@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!alertas.Any())
+                if (alertas.Count == 0)
                     return NotFound("Nenhum alerta encontrado.");
 
                 return Ok(alertas);
@@ -86,17 +86,23 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == alerta.IdRegiao);
+                    .AsNoTracking()
+                    .Where(r => r.IdRegiao == alerta.IdRegiao)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
 
-                if (!regiaoExiste)
+                if (regiaoExiste == 0)
                     return NotFound("Região informada não encontrada.");
 
                 if (alerta.IdHistorico.HasValue)
                 {
                     var historicoExiste = await _context.HistoricosRisco
-                        .AnyAsync(h => h.IdHistorico == alerta.IdHistorico);
+                        .AsNoTracking()
+                        .Where(h => h.IdHistorico == alerta.IdHistorico)
+                        .Select(h => h.IdHistorico)
+                        .FirstOrDefaultAsync();
 
-                    if (!historicoExiste)
+                    if (historicoExiste == 0)
                         return NotFound("Histórico informado não encontrado.");
                 }
 
@@ -140,23 +146,32 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var alertaExiste = await _context.AlertasRisco
-                    .AnyAsync(a => a.IdAlerta == id);
+                    .AsNoTracking()
+                    .Where(a => a.IdAlerta == id)
+                    .Select(a => a.IdAlerta)
+                    .FirstOrDefaultAsync();
 
-                if (!alertaExiste)
+                if (alertaExiste == 0)
                     return NotFound("Alerta não encontrado.");
 
                 var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == alerta.IdRegiao);
+                    .AsNoTracking()
+                    .Where(r => r.IdRegiao == alerta.IdRegiao)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
 
-                if (!regiaoExiste)
+                if (regiaoExiste == 0)
                     return NotFound("Região informada não encontrada.");
 
                 if (alerta.IdHistorico.HasValue)
                 {
                     var historicoExiste = await _context.HistoricosRisco
-                        .AnyAsync(h => h.IdHistorico == alerta.IdHistorico);
+                        .AsNoTracking()
+                        .Where(h => h.IdHistorico == alerta.IdHistorico)
+                        .Select(h => h.IdHistorico)
+                        .FirstOrDefaultAsync();
 
-                    if (!historicoExiste)
+                    if (historicoExiste == 0)
                         return NotFound("Histórico informado não encontrado.");
                 }
 
@@ -193,12 +208,18 @@ namespace OrbitGuardAPI.Controllers
                     return NotFound("Alerta não encontrado.");
 
                 var possuiOcorrencias = await _context.Ocorrencias
-                    .AnyAsync(o => o.IdAlerta == id);
+                    .AsNoTracking()
+                    .Where(o => o.IdAlerta == id)
+                    .Select(o => o.IdOcorrencia)
+                    .FirstOrDefaultAsync();
 
                 var possuiAuditorias = await _context.AuditoriasAlerta
-                    .AnyAsync(a => a.IdAlerta == id);
+                    .AsNoTracking()
+                    .Where(a => a.IdAlerta == id)
+                    .Select(a => a.IdAuditoria)
+                    .FirstOrDefaultAsync();
 
-                if (possuiOcorrencias || possuiAuditorias)
+                if (possuiOcorrencias != 0 || possuiAuditorias != 0)
                     return Conflict("Não é possível remover o alerta, pois existem registros vinculados a ele.");
 
                 _context.AlertasRisco.Remove(alerta);

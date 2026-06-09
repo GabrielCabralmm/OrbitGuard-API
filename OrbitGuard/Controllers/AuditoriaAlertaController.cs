@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrbitGuardAPI.Data;
 using OrbitGuardAPI.Entitys;
@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!auditorias.Any())
+                if (auditorias.Count == 0)
                     return NotFound("Nenhuma auditoria encontrada.");
 
                 return Ok(auditorias);
@@ -90,9 +90,12 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var alertaExiste = await _context.AlertasRisco
-                    .AnyAsync(a => a.IdAlerta == auditoria.IdAlerta);
+                    .AsNoTracking()
+                    .Where(a => a.IdAlerta == auditoria.IdAlerta)
+                    .Select(a => a.IdAlerta)
+                    .FirstOrDefaultAsync();
 
-                if (!alertaExiste)
+                if (alertaExiste == 0)
                     return NotFound("Alerta informado não encontrado.");
 
                 auditoria.Acao = auditoria.Acao.ToUpper();
@@ -142,15 +145,21 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var auditoriaExiste = await _context.AuditoriasAlerta
-                    .AnyAsync(a => a.IdAuditoria == id);
+                    .AsNoTracking()
+                    .Where(a => a.IdAuditoria == id)
+                    .Select(a => a.IdAuditoria)
+                    .FirstOrDefaultAsync();
 
-                if (!auditoriaExiste)
+                if (auditoriaExiste == 0)
                     return NotFound("Auditoria não encontrada.");
 
                 var alertaExiste = await _context.AlertasRisco
-                    .AnyAsync(a => a.IdAlerta == auditoria.IdAlerta);
+                    .AsNoTracking()
+                    .Where(a => a.IdAlerta == auditoria.IdAlerta)
+                    .Select(a => a.IdAlerta)
+                    .FirstOrDefaultAsync();
 
-                if (!alertaExiste)
+                if (alertaExiste == 0)
                     return NotFound("Alerta informado não encontrado.");
 
                 auditoria.Acao = auditoria.Acao.ToUpper();

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrbitGuardAPI.Data;
 using OrbitGuardAPI.Entitys;
@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!ocorrencias.Any())
+                if (ocorrencias.Count == 0)
                     return NotFound("Nenhuma ocorrência encontrada.");
 
                 return Ok(ocorrencias);
@@ -86,23 +86,32 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var usuarioExiste = await _context.Usuarios
-                    .AnyAsync(u => u.IdUsuario == ocorrencia.IdUsuario);
+                    .AsNoTracking()
+                    .Where(u => u.IdUsuario == ocorrencia.IdUsuario)
+                    .Select(u => u.IdUsuario)
+                    .FirstOrDefaultAsync();
 
-                if (!usuarioExiste)
+                if (usuarioExiste == 0)
                     return NotFound("Usuário informado não encontrado.");
 
                 var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == ocorrencia.IdRegiao);
+                    .AsNoTracking()
+                    .Where(r => r.IdRegiao == ocorrencia.IdRegiao)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
 
-                if (!regiaoExiste)
+                if (regiaoExiste == 0)
                     return NotFound("Região informada não encontrada.");
 
                 if (ocorrencia.IdAlerta.HasValue)
                 {
                     var alertaExiste = await _context.AlertasRisco
-                        .AnyAsync(a => a.IdAlerta == ocorrencia.IdAlerta);
+                        .AsNoTracking()
+                        .Where(a => a.IdAlerta == ocorrencia.IdAlerta)
+                        .Select(a => a.IdAlerta)
+                        .FirstOrDefaultAsync();
 
-                    if (!alertaExiste)
+                    if (alertaExiste == 0)
                         return NotFound("Alerta informado não encontrado.");
                 }
 
@@ -146,29 +155,41 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var ocorrenciaExiste = await _context.Ocorrencias
-                    .AnyAsync(o => o.IdOcorrencia == id);
+                    .AsNoTracking()
+                    .Where(o => o.IdOcorrencia == id)
+                    .Select(o => o.IdOcorrencia)
+                    .FirstOrDefaultAsync();
 
-                if (!ocorrenciaExiste)
+                if (ocorrenciaExiste == 0)
                     return NotFound("Ocorrência não encontrada.");
 
                 var usuarioExiste = await _context.Usuarios
-                    .AnyAsync(u => u.IdUsuario == ocorrencia.IdUsuario);
+                    .AsNoTracking()
+                    .Where(u => u.IdUsuario == ocorrencia.IdUsuario)
+                    .Select(u => u.IdUsuario)
+                    .FirstOrDefaultAsync();
 
-                if (!usuarioExiste)
+                if (usuarioExiste == 0)
                     return NotFound("Usuário informado não encontrado.");
 
                 var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == ocorrencia.IdRegiao);
+                    .AsNoTracking()
+                    .Where(r => r.IdRegiao == ocorrencia.IdRegiao)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
 
-                if (!regiaoExiste)
+                if (regiaoExiste == 0)
                     return NotFound("Região informada não encontrada.");
 
                 if (ocorrencia.IdAlerta.HasValue)
                 {
                     var alertaExiste = await _context.AlertasRisco
-                        .AnyAsync(a => a.IdAlerta == ocorrencia.IdAlerta);
+                        .AsNoTracking()
+                        .Where(a => a.IdAlerta == ocorrencia.IdAlerta)
+                        .Select(a => a.IdAlerta)
+                        .FirstOrDefaultAsync();
 
-                    if (!alertaExiste)
+                    if (alertaExiste == 0)
                         return NotFound("Alerta informado não encontrado.");
                 }
 

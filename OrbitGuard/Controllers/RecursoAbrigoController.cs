@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrbitGuardAPI.Data;
 using OrbitGuardAPI.Entitys;
@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!recursos.Any())
+                if (recursos.Count == 0)
                     return NotFound("Nenhum recurso de abrigo encontrado.");
 
                 return Ok(recursos);
@@ -90,9 +90,12 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var abrigoExiste = await _context.Abrigos
-                    .AnyAsync(a => a.IdAbrigo == recurso.IdAbrigo);
+                    .AsNoTracking()
+                    .Where(a => a.IdAbrigo == recurso.IdAbrigo)
+                    .Select(a => a.IdAbrigo)
+                    .FirstOrDefaultAsync();
 
-                if (!abrigoExiste)
+                if (abrigoExiste == 0)
                     return NotFound("Abrigo informado não encontrado.");
 
                 recurso.TipoRecurso = recurso.TipoRecurso.ToUpper();
@@ -134,15 +137,21 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var recursoExiste = await _context.RecursosAbrigo
-                    .AnyAsync(r => r.IdRecurso == id);
+                    .AsNoTracking()
+                    .Where(r => r.IdRecurso == id)
+                    .Select(r => r.IdRecurso)
+                    .FirstOrDefaultAsync();
 
-                if (!recursoExiste)
+                if (recursoExiste == 0)
                     return NotFound("Recurso de abrigo não encontrado.");
 
                 var abrigoExiste = await _context.Abrigos
-                    .AnyAsync(a => a.IdAbrigo == recurso.IdAbrigo);
+                    .AsNoTracking()
+                    .Where(a => a.IdAbrigo == recurso.IdAbrigo)
+                    .Select(a => a.IdAbrigo)
+                    .FirstOrDefaultAsync();
 
-                if (!abrigoExiste)
+                if (abrigoExiste == 0)
                     return NotFound("Abrigo informado não encontrado.");
 
                 recurso.TipoRecurso = recurso.TipoRecurso.ToUpper();

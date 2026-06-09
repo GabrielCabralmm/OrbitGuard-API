@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrbitGuardAPI.Data;
 using OrbitGuardAPI.Entitys;
@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!historicos.Any())
+                if (historicos.Count == 0)
                     return NotFound("Nenhum histórico de risco encontrado.");
 
                 return Ok(historicos);
@@ -90,9 +90,12 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == historico.IdRegiao);
+                    .AsNoTracking()
+                    .Where(r => r.IdRegiao == historico.IdRegiao)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
 
-                if (!regiaoExiste)
+                if (regiaoExiste == 0)
                     return NotFound("Região informada não encontrada.");
 
                 historico.NivelRisco = historico.NivelRisco.ToUpper();
@@ -136,15 +139,21 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var historicoExiste = await _context.HistoricosRisco
-                    .AnyAsync(h => h.IdHistorico == id);
+                    .AsNoTracking()
+                    .Where(h => h.IdHistorico == id)
+                    .Select(h => h.IdHistorico)
+                    .FirstOrDefaultAsync();
 
-                if (!historicoExiste)
+                if (historicoExiste == 0)
                     return NotFound("Histórico de risco não encontrado.");
 
                 var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == historico.IdRegiao);
+                    .AsNoTracking()
+                    .Where(r => r.IdRegiao == historico.IdRegiao)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
 
-                if (!regiaoExiste)
+                if (regiaoExiste == 0)
                     return NotFound("Região informada não encontrada.");
 
                 historico.NivelRisco = historico.NivelRisco.ToUpper();
@@ -181,9 +190,12 @@ namespace OrbitGuardAPI.Controllers
                     return NotFound("Histórico de risco não encontrado.");
 
                 var possuiAlertas = await _context.AlertasRisco
-                    .AnyAsync(a => a.IdHistorico == id);
+                    .AsNoTracking()
+                    .Where(a => a.IdHistorico == id)
+                    .Select(a => a.IdAlerta)
+                    .FirstOrDefaultAsync();
 
-                if (possuiAlertas)
+                if (possuiAlertas != 0)
                     return Conflict("Não é possível remover o histórico, pois existem alertas vinculados a ele.");
 
                 _context.HistoricosRisco.Remove(historico);

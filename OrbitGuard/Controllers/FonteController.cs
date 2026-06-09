@@ -19,9 +19,7 @@ namespace OrbitGuardAPI.Controllers
         }
 
         [HttpGet]
-        [SwaggerOperation(
-            Summary = "Lista todas as fontes espaciais",
-            Description = "Retorna todas as fontes espaciais cadastradas no OrbitGuard. Caso não existam registros, retorna 404 Not Found.")]
+        [SwaggerOperation(Summary = "Lista todas as fontes espaciais")]
         [ProducesResponseType(typeof(IEnumerable<FonteEntity>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
@@ -33,23 +31,19 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!fontes.Any())
+                if (fontes.Count == 0)
                     return NotFound("Nenhuma fonte espacial encontrada.");
 
                 return Ok(fontes);
             }
             catch
             {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    "Erro interno ao buscar fontes espaciais.");
+                return StatusCode(500, "Erro interno ao buscar fontes espaciais.");
             }
         }
 
         [HttpGet("{id:long}")]
-        [SwaggerOperation(
-            Summary = "Busca uma fonte espacial por ID",
-            Description = "Retorna os dados de uma fonte espacial específica a partir do ID informado.")]
+        [SwaggerOperation(Summary = "Busca uma fonte espacial por ID")]
         [ProducesResponseType(typeof(FonteEntity), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
@@ -68,16 +62,12 @@ namespace OrbitGuardAPI.Controllers
             }
             catch
             {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    "Erro interno ao buscar fonte espacial.");
+                return StatusCode(500, "Erro interno ao buscar fonte espacial.");
             }
         }
 
         [HttpPost]
-        [SwaggerOperation(
-            Summary = "Cadastra uma nova fonte espacial",
-            Description = "Cria uma nova fonte espacial no sistema OrbitGuard, como NASA POWER, NASA FIRMS ou outra origem externa de dados ambientais.")]
+        [SwaggerOperation(Summary = "Cadastra uma nova fonte espacial")]
         [ProducesResponseType(typeof(FonteEntity), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(SerializableError), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
@@ -89,13 +79,20 @@ namespace OrbitGuardAPI.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
+                fonte.Nome = fonte.Nome.Trim();
+                fonte.TipoDado = fonte.TipoDado.Trim().ToUpper();
+
+                if (!string.IsNullOrWhiteSpace(fonte.UrlBase))
+                    fonte.UrlBase = fonte.UrlBase.Trim();
+
                 var nomeExiste = await _context.FontesEspaciais
-                    .AnyAsync(f => f.Nome.ToLower() == fonte.Nome.ToLower());
+                    .AsNoTracking()
+                    .Where(f => f.Nome.ToLower() == fonte.Nome.ToLower())
+                    .Select(f => f.IdFonte)
+                    .FirstOrDefaultAsync();
 
-                if (nomeExiste)
+                if (nomeExiste != 0)
                     return Conflict("Já existe uma fonte espacial cadastrada com este nome.");
-
-                fonte.TipoDado = fonte.TipoDado.ToUpper();
 
                 if (fonte.DataColeta == default)
                     fonte.DataColeta = DateTime.Now;
@@ -110,16 +107,12 @@ namespace OrbitGuardAPI.Controllers
             }
             catch
             {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    "Erro interno ao cadastrar fonte espacial.");
+                return StatusCode(500, "Erro interno ao cadastrar fonte espacial.");
             }
         }
 
         [HttpPut("{id:long}")]
-        [SwaggerOperation(
-            Summary = "Atualiza uma fonte espacial",
-            Description = "Atualiza completamente os dados de uma fonte espacial existente. O ID da URL deve ser igual ao ID enviado no corpo da requisição.")]
+        [SwaggerOperation(Summary = "Atualiza uma fonte espacial")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(SerializableError), StatusCodes.Status400BadRequest)]
@@ -136,39 +129,47 @@ namespace OrbitGuardAPI.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var fonteExiste = await _context.FontesEspaciais
-                    .AnyAsync(f => f.IdFonte == id);
+                fonte.Nome = fonte.Nome.Trim();
+                fonte.TipoDado = fonte.TipoDado.Trim().ToUpper();
 
-                if (!fonteExiste)
-                    return NotFound("Fonte espacial não encontrada.");
+                if (!string.IsNullOrWhiteSpace(fonte.UrlBase))
+                    fonte.UrlBase = fonte.UrlBase.Trim();
 
                 var nomeEmUso = await _context.FontesEspaciais
-                    .AnyAsync(f =>
-                        f.Nome.ToLower() == fonte.Nome.ToLower()
-                        && f.IdFonte != id);
+                    .AsNoTracking()
+                    .Where(f => f.Nome.ToLower() == fonte.Nome.ToLower() && f.IdFonte != id)
+                    .Select(f => f.IdFonte)
+                    .FirstOrDefaultAsync();
 
-                if (nomeEmUso)
+                if (nomeEmUso != 0)
                     return Conflict("Já existe outra fonte espacial cadastrada com este nome.");
 
-                fonte.TipoDado = fonte.TipoDado.ToUpper();
+                var fonteBanco = await _context.FontesEspaciais
+                    .FirstOrDefaultAsync(f => f.IdFonte == id);
 
-                _context.Entry(fonte).State = EntityState.Modified;
+                if (fonteBanco == null)
+                    return NotFound("Fonte espacial não encontrada.");
+
+                fonteBanco.Nome = fonte.Nome;
+                fonteBanco.TipoDado = fonte.TipoDado;
+                fonteBanco.UrlBase = fonte.UrlBase;
+                fonteBanco.PayloadExemplo = fonte.PayloadExemplo;
+                fonteBanco.DataColeta = fonte.DataColeta == default
+                    ? fonteBanco.DataColeta
+                    : fonte.DataColeta;
+
                 await _context.SaveChangesAsync();
 
                 return NoContent();
             }
             catch
             {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    "Erro interno ao atualizar fonte espacial.");
+                return StatusCode(500, "Erro interno ao atualizar fonte espacial.");
             }
         }
 
         [HttpDelete("{id:long}")]
-        [SwaggerOperation(
-            Summary = "Remove uma fonte espacial",
-            Description = "Remove uma fonte espacial existente a partir do ID informado.")]
+        [SwaggerOperation(Summary = "Remove uma fonte espacial")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
@@ -189,9 +190,7 @@ namespace OrbitGuardAPI.Controllers
             }
             catch
             {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    "Erro interno ao remover fonte espacial.");
+                return StatusCode(500, "Erro interno ao remover fonte espacial.");
             }
         }
     }

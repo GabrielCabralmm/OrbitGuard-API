@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrbitGuardAPI.Data;
 using OrbitGuardAPI.Entitys;
@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!sensores.Any())
+                if (sensores.Count == 0)
                     return NotFound("Nenhum sensor encontrado.");
 
                 return Ok(sensores);
@@ -91,15 +91,21 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == sensor.IdRegiao);
+                    .AsNoTracking()
+                    .Where(r => r.IdRegiao == sensor.IdRegiao)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
 
-                if (!regiaoExiste)
+                if (regiaoExiste == 0)
                     return NotFound("Região informada não encontrada.");
 
                 var codigoExiste = await _context.SensoresIot
-                    .AnyAsync(s => s.Codigo.ToLower() == sensor.Codigo.ToLower());
+                    .AsNoTracking()
+                    .Where(s => s.Codigo.ToLower() == sensor.Codigo.ToLower())
+                    .Select(s => s.IdSensor)
+                    .FirstOrDefaultAsync();
 
-                if (codigoExiste)
+                if (codigoExiste != 0)
                     return Conflict("Já existe um sensor cadastrado com este código.");
 
                 sensor.Codigo = sensor.Codigo.ToUpper();
@@ -146,23 +152,32 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var sensorExiste = await _context.SensoresIot
-                    .AnyAsync(s => s.IdSensor == id);
+                    .AsNoTracking()
+                    .Where(s => s.IdSensor == id)
+                    .Select(s => s.IdSensor)
+                    .FirstOrDefaultAsync();
 
-                if (!sensorExiste)
+                if (sensorExiste == 0)
                     return NotFound("Sensor não encontrado.");
 
                 var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == sensor.IdRegiao);
+                    .AsNoTracking()
+                    .Where(r => r.IdRegiao == sensor.IdRegiao)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
 
-                if (!regiaoExiste)
+                if (regiaoExiste == 0)
                     return NotFound("Região informada não encontrada.");
 
                 var codigoEmUso = await _context.SensoresIot
-                    .AnyAsync(s =>
+                    .AsNoTracking()
+                    .Where(s =>
                         s.Codigo.ToLower() == sensor.Codigo.ToLower()
-                        && s.IdSensor != id);
+                        && s.IdSensor != id)
+                    .Select(s => s.IdSensor)
+                    .FirstOrDefaultAsync();
 
-                if (codigoEmUso)
+                if (codigoEmUso != 0)
                     return Conflict("Já existe outro sensor cadastrado com este código.");
 
                 sensor.Codigo = sensor.Codigo.ToUpper();
@@ -201,9 +216,12 @@ namespace OrbitGuardAPI.Controllers
                     return NotFound("Sensor não encontrado.");
 
                 var possuiLeituras = await _context.LeiturasSensor
-                    .AnyAsync(l => l.IdSensor == id);
+                    .AsNoTracking()
+                    .Where(l => l.IdSensor == id)
+                    .Select(l => l.IdLeitura)
+                    .FirstOrDefaultAsync();
 
-                if (possuiLeituras)
+                if (possuiLeituras != 0)
                     return Conflict("Não é possível remover o sensor, pois existem leituras vinculadas a ele.");
 
                 _context.SensoresIot.Remove(sensor);

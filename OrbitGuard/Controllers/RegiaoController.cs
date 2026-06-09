@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!regioes.Any())
+                if (regioes.Count == 0)
                     return NotFound("Nenhuma região encontrada.");
 
                 return Ok(regioes);
@@ -80,6 +80,7 @@ namespace OrbitGuardAPI.Controllers
             Description = "Cria uma nova região monitorada no sistema OrbitGuard.")]
         [ProducesResponseType(typeof(RegiaoEntity), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(SerializableError), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<RegiaoEntity>> Post([FromBody] RegiaoEntity regiao)
         {
@@ -88,8 +89,22 @@ namespace OrbitGuardAPI.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                regiao.Uf = regiao.Uf.ToUpper();
-                regiao.TipoRiscoBase = regiao.TipoRiscoBase.ToUpper();
+                regiao.Nome = regiao.Nome.Trim();
+                regiao.Cidade = regiao.Cidade.Trim();
+                regiao.Uf = regiao.Uf.Trim().ToUpper();
+                regiao.TipoRiscoBase = regiao.TipoRiscoBase.Trim().ToUpper();
+
+                var regiaoExiste = await _context.Regioes
+                    .AsNoTracking()
+                    .Where(r =>
+                        r.Nome.ToLower() == regiao.Nome.ToLower()
+                        && r.Cidade.ToLower() == regiao.Cidade.ToLower()
+                        && r.Uf.ToLower() == regiao.Uf.ToLower())
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
+
+                if (regiaoExiste != 0)
+                    return Conflict("Já existe uma região cadastrada com este nome, cidade e UF.");
 
                 _context.Regioes.Add(regiao);
                 await _context.SaveChangesAsync();
@@ -115,6 +130,7 @@ namespace OrbitGuardAPI.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(SerializableError), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Put(long id, [FromBody] RegiaoEntity regiao)
         {
@@ -126,16 +142,38 @@ namespace OrbitGuardAPI.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var regiaoExiste = await _context.Regioes
-                    .AnyAsync(r => r.IdRegiao == id);
+                regiao.Nome = regiao.Nome.Trim();
+                regiao.Cidade = regiao.Cidade.Trim();
+                regiao.Uf = regiao.Uf.Trim().ToUpper();
+                regiao.TipoRiscoBase = regiao.TipoRiscoBase.Trim().ToUpper();
 
-                if (!regiaoExiste)
+                var regiaoEmUso = await _context.Regioes
+                    .AsNoTracking()
+                    .Where(r =>
+                        r.Nome.ToLower() == regiao.Nome.ToLower()
+                        && r.Cidade.ToLower() == regiao.Cidade.ToLower()
+                        && r.Uf.ToLower() == regiao.Uf.ToLower()
+                        && r.IdRegiao != id)
+                    .Select(r => r.IdRegiao)
+                    .FirstOrDefaultAsync();
+
+                if (regiaoEmUso != 0)
+                    return Conflict("Já existe outra região cadastrada com este nome, cidade e UF.");
+
+                var regiaoBanco = await _context.Regioes
+                    .FirstOrDefaultAsync(r => r.IdRegiao == id);
+
+                if (regiaoBanco == null)
                     return NotFound("Região não encontrada.");
 
-                regiao.Uf = regiao.Uf.ToUpper();
-                regiao.TipoRiscoBase = regiao.TipoRiscoBase.ToUpper();
+                regiaoBanco.Nome = regiao.Nome;
+                regiaoBanco.Cidade = regiao.Cidade;
+                regiaoBanco.Uf = regiao.Uf;
+                regiaoBanco.Latitude = regiao.Latitude;
+                regiaoBanco.Longitude = regiao.Longitude;
+                regiaoBanco.TipoRiscoBase = regiao.TipoRiscoBase;
+                regiaoBanco.PopulacaoEstimada = regiao.PopulacaoEstimada;
 
-                _context.Entry(regiao).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
                 return NoContent();
@@ -151,7 +189,7 @@ namespace OrbitGuardAPI.Controllers
         [HttpDelete("{id:long}")]
         [SwaggerOperation(
             Summary = "Remove uma região",
-            Description = "Remove uma região existente a partir do ID informado.")]
+            Description = "Remove uma região existente a partir do ID informado. Caso existam registros vinculados, retorna 409 Conflict.")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
@@ -166,15 +204,50 @@ namespace OrbitGuardAPI.Controllers
                 if (regiao == null)
                     return NotFound("Região não encontrada.");
 
-                var possuiDependencias =
-                    await _context.SensoresIot.AnyAsync(s => s.IdRegiao == id) ||
-                    await _context.Abrigos.AnyAsync(a => a.IdRegiao == id) ||
-                    await _context.HistoricosRisco.AnyAsync(h => h.IdRegiao == id) ||
-                    await _context.AlertasRisco.AnyAsync(a => a.IdRegiao == id) ||
-                    await _context.Ocorrencias.AnyAsync(o => o.IdRegiao == id);
+                var possuiSensor = await _context.SensoresIot
+                    .AsNoTracking()
+                    .Where(s => s.IdRegiao == id)
+                    .Select(s => s.IdSensor)
+                    .FirstOrDefaultAsync();
 
-                if (possuiDependencias)
-                    return Conflict("Não é possível remover a região, pois existem registros vinculados a ela.");
+                if (possuiSensor != 0)
+                    return Conflict("Não é possível remover a região, pois existem sensores vinculados a ela.");
+
+                var possuiAbrigo = await _context.Abrigos
+                    .AsNoTracking()
+                    .Where(a => a.IdRegiao == id)
+                    .Select(a => a.IdAbrigo)
+                    .FirstOrDefaultAsync();
+
+                if (possuiAbrigo != 0)
+                    return Conflict("Não é possível remover a região, pois existem abrigos vinculados a ela.");
+
+                var possuiHistorico = await _context.HistoricosRisco
+                    .AsNoTracking()
+                    .Where(h => h.IdRegiao == id)
+                    .Select(h => h.IdHistorico)
+                    .FirstOrDefaultAsync();
+
+                if (possuiHistorico != 0)
+                    return Conflict("Não é possível remover a região, pois existem históricos vinculados a ela.");
+
+                var possuiAlerta = await _context.AlertasRisco
+                    .AsNoTracking()
+                    .Where(a => a.IdRegiao == id)
+                    .Select(a => a.IdAlerta)
+                    .FirstOrDefaultAsync();
+
+                if (possuiAlerta != 0)
+                    return Conflict("Não é possível remover a região, pois existem alertas vinculados a ela.");
+
+                var possuiOcorrencia = await _context.Ocorrencias
+                    .AsNoTracking()
+                    .Where(o => o.IdRegiao == id)
+                    .Select(o => o.IdOcorrencia)
+                    .FirstOrDefaultAsync();
+
+                if (possuiOcorrencia != 0)
+                    return Conflict("Não é possível remover a região, pois existem ocorrências vinculadas a ela.");
 
                 _context.Regioes.Remove(regiao);
                 await _context.SaveChangesAsync();

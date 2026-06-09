@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrbitGuardAPI.Data;
 using OrbitGuardAPI.Entitys;
@@ -33,7 +33,7 @@ namespace OrbitGuardAPI.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                if (!leituras.Any())
+                if (leituras.Count == 0)
                     return NotFound("Nenhuma leitura encontrada.");
 
                 return Ok(leituras);
@@ -90,9 +90,12 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var sensorExiste = await _context.SensoresIot
-                    .AnyAsync(s => s.IdSensor == leitura.IdSensor);
+                    .AsNoTracking()
+                    .Where(s => s.IdSensor == leitura.IdSensor)
+                    .Select(s => s.IdSensor)
+                    .FirstOrDefaultAsync();
 
-                if (!sensorExiste)
+                if (sensorExiste == 0)
                     return NotFound("Sensor informado não encontrado.");
 
                 leitura.Origem = leitura.Origem.ToUpper();
@@ -136,15 +139,21 @@ namespace OrbitGuardAPI.Controllers
                     return BadRequest(ModelState);
 
                 var leituraExiste = await _context.LeiturasSensor
-                    .AnyAsync(l => l.IdLeitura == id);
+                    .AsNoTracking()
+                    .Where(l => l.IdLeitura == id)
+                    .Select(l => l.IdLeitura)
+                    .FirstOrDefaultAsync();
 
-                if (!leituraExiste)
+                if (leituraExiste == 0)
                     return NotFound("Leitura não encontrada.");
 
                 var sensorExiste = await _context.SensoresIot
-                    .AnyAsync(s => s.IdSensor == leitura.IdSensor);
+                    .AsNoTracking()
+                    .Where(s => s.IdSensor == leitura.IdSensor)
+                    .Select(s => s.IdSensor)
+                    .FirstOrDefaultAsync();
 
-                if (!sensorExiste)
+                if (sensorExiste == 0)
                     return NotFound("Sensor informado não encontrado.");
 
                 leitura.Origem = leitura.Origem.ToUpper();
