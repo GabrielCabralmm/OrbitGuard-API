@@ -361,28 +361,29 @@ Os exemplos abaixo podem ser utilizados diretamente no Swagger para validar os p
 
 ## Cadastro de Usuário
 
-POST /api/Usuario
+POST `/Usuario`
 
 ```json
 {
   "nome": "Gabriel Cabral",
-  "email": "gabriel@email.com",
+  "email": "gabriel.teste@email.com",
   "perfil": "ADMIN",
   "telefone": "11999999999",
+  "dataCadastro": "2026-06-09T10:00:00",
   "ativo": "S"
 }
 ```
 
 ## Cadastro de Região
 
-POST /api/Regiao
+POST `/Regiao`
 
 ```json
 {
-  "nome": "Zona Sul",
+  "nome": "Zona Leste",
   "cidade": "São Paulo",
   "uf": "SP",
-  "latitude": -23.550520,
+  "latitude": -23.55052,
   "longitude": -46.633308,
   "tipoRiscoBase": "ENCHENTE",
   "populacaoEstimada": 500000
@@ -391,55 +392,55 @@ POST /api/Regiao
 
 ## Cadastro de Fonte Espacial
 
-POST /api/Fonte
+POST `/Fonte`
 
 ```json
 {
   "nome": "NASA POWER",
   "tipoDado": "CLIMA",
   "urlBase": "https://power.larc.nasa.gov",
-  "payloadExemplo": "{\"temperatura\":28}",
-  "dataColeta": "2026-06-02T10:00:00"
+  "payloadExemplo": "{\"temperatura\":28,\"chuva\":75}",
+  "dataColeta": "2026-06-09T10:00:00"
 }
 ```
 
 ## Cadastro de Sensor
 
-POST /api/Sensor
+POST `/Sensor`
 
 ```json
 {
   "idRegiao": 1,
-  "codigo": "SENSOR001",
+  "codigo": "SENSOR-CHUVA-001",
   "tipoSensor": "CHUVA",
   "statusSensor": "ATIVO",
-  "dataInstalacao": "2026-06-02T10:00:00"
+  "dataInstalacao": "2026-06-09T10:10:00"
 }
 ```
 
 ## Cadastro de Leitura
 
-POST /api/Leitura
+POST `/Leitura`
 
 ```json
 {
   "idSensor": 1,
-  "valor": 75.4,
+  "valor": 82.5,
   "unidade": "MM",
   "origem": "IOT",
-  "dataLeitura": "2026-06-02T10:15:00"
+  "dataLeitura": "2026-06-09T10:20:00"
 }
 ```
 
 ## Cadastro de Abrigo
 
-POST /api/Abrigo
+POST `/Abrigo`
 
 ```json
 {
   "idRegiao": 1,
   "nome": "Abrigo Municipal Central",
-  "endereco": "Rua das Flores, 100",
+  "endereco": "Rua das Flores, 100 - São Paulo",
   "capacidadeTotal": 500,
   "capacidadeOcupada": 150,
   "ativo": "S"
@@ -448,7 +449,7 @@ POST /api/Abrigo
 
 ## Cadastro de Recurso de Abrigo
 
-POST /api/RecursoAbrigo
+POST `/RecursoAbrigo`
 
 ```json
 {
@@ -461,21 +462,21 @@ POST /api/RecursoAbrigo
 
 ## Cadastro de Histórico de Risco
 
-POST /api/Historico
+POST `/Historico`
 
 ```json
 {
   "idRegiao": 1,
-  "indiceRisco": 85.50,
+  "indiceRisco": 85,
   "nivelRisco": "ALTO",
-  "motivo": "Volume de chuva acima do esperado",
-  "dataCalculo": "2026-06-02T11:00:00"
+  "motivo": "Volume elevado de chuva e risco de alagamento.",
+  "dataCalculo": "2026-06-09T10:30:00"
 }
 ```
 
 ## Cadastro de Alerta
 
-POST /api/Alerta
+POST `/Alerta`
 
 ```json
 {
@@ -485,13 +486,13 @@ POST /api/Alerta
   "mensagem": "Possibilidade de alagamentos nas próximas horas.",
   "nivelRisco": "ALTO",
   "statusAlerta": "ABERTO",
-  "dataAlerta": "2026-06-02T11:30:00"
+  "dataAlerta": "2026-06-09T10:40:00"
 }
 ```
 
 ## Cadastro de Ocorrência
 
-POST /api/Ocorrencia
+POST `/Ocorrencia`
 
 ```json
 {
@@ -501,27 +502,27 @@ POST /api/Ocorrencia
   "tipoOcorrencia": "ENCHENTE",
   "descricao": "Rua parcialmente alagada.",
   "statusOcorrencia": "ABERTA",
-  "dataOcorrencia": "2026-06-02T12:00:00"
+  "dataOcorrencia": "2026-06-09T10:50:00"
 }
 ```
 
 ## Cadastro de Auditoria de Alerta
 
-POST /api/AuditoriaAlerta
+POST `/AuditoriaAlerta`
 
 ```json
 {
   "idAlerta": 1,
   "acao": "CRIACAO",
-  "statusAnterior": "ABERTO",
-  "statusNovo": "EM_ANALISE",
-  "dataAuditoria": "2026-06-02T12:30:00"
+  "statusAnterior": "NENHUM",
+  "statusNovo": "ABERTO",
+  "dataAuditoria": "2026-06-09T11:00:00"
 }
 ```
 
 ## Exemplo de Validação de Erro
 
-GET /api/Usuario/99999
+GET /Usuario/99999
 
 Resposta esperada:
 
